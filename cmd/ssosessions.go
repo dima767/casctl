@@ -22,15 +22,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var casServerBaseUrl string
-
 // ssosessionsCmd represents the ssosessions command
 var ssosessionsCmd = &cobra.Command{
-	Use:   "ssosessions [URL of CAS server (no trailing slash)]",
+	Use:   "ssosessions [URL of CAS server (with trailing slash)]",
 	Short: "Display a report about active SSO sessions in a running CAS server.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			er("[ssosessioins] needs a URL of CAS server")
+			erAndExit("[ssosessioins] needs a URL of CAS server")
 		}
 		casServerBaseUrl = args[0]
 		displaySsoSessions()
@@ -73,9 +71,16 @@ func newSsoReportService(httpClient *http.Client) *ssoReportService {
 
 func displaySsoSessions() {
 	ssoReportService := newSsoReportService(nil)
-	ssoSessionReport, _, _ := ssoReportService.listActiveSessions()
+	ssoSessionReport, resp, _ := ssoReportService.listActiveSessions()
+	if resp == nil || resp.StatusCode == 404 {
+		erAndExit("Invalid or unreachable CAS server.")
+	}
 	table := termtables.CreateTable()
-	table.AddHeaders("User", "Authentication Date", "Number of uses for this session", "Logged in services")
+	table.AddTitle("CAS server " + casServerBaseUrl + " active SSO sessions")
+	table.AddHeaders("User", "Authentication Date", "Number of uses", "Services")
+	if ssoSessionReport.TotalPrincipals == 0 {
+		infoAndExit("No active SSO sessions")
+	}
 	for _, s := range ssoSessionReport.ActiveSsoSessions {
 		var services string
 		for _, service := range s.AuthenticatedServices {
@@ -84,6 +89,6 @@ func displaySsoSessions() {
 		table.AddRow(s.AuthenticatedPrincipal, s.AuthenticationDate, s.NumberOfUses, strings.TrimSuffix(services, ","))
 	}
 
-	fmt.Println(table.Render())
-
+	fmt.Println()
+	greenPrintln(table.Render())
 }

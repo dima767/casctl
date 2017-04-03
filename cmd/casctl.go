@@ -14,10 +14,15 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+)
+
+var (
+	casServerBaseUrl string
+	redPrintln       = color.New(color.Bold, color.FgHiRed).PrintlnFunc()
+	cyanPrintln      = color.New(color.Bold, color.FgHiCyan).PrintlnFunc()
+	greenPrintln     = color.New(color.Bold, color.FgHiGreen).PrintlnFunc()
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -30,7 +35,6 @@ var RootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+		erAndExit(err)
 	}
 }
