@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/apcera/termtables"
-	"github.com/dghubble/sling"
 	"github.com/spf13/cobra"
 )
 
@@ -53,28 +52,17 @@ type AuthenticatedService struct {
 	OriginalUrl string
 }
 
-type ssoReportService struct {
-	sling *sling.Sling
-}
-
-func (s *ssoReportService) listActiveSessions() (*SsoSessionReport, *http.Response, error) {
+func (s *casReportingService) listActiveSessions() (*SsoSessionReport, *http.Response, error) {
 	activeSessions := &SsoSessionReport{}
 	resp, err := s.sling.New().Path("status/ssosessions/getSsoSessions").ReceiveSuccess(activeSessions)
 	return activeSessions, resp, err
 }
 
-func newSsoReportService(httpClient *http.Client) *ssoReportService {
-	return &ssoReportService{
-		sling: sling.New().Client(httpClient).Base(casServerBaseUrl),
-	}
-}
-
 func displaySsoSessions() {
-	ssoReportService := newSsoReportService(nil)
-	ssoSessionReport, resp, _ := ssoReportService.listActiveSessions()
-	if resp == nil || resp.StatusCode == 404 {
-		erAndExit("Invalid or unreachable CAS server.")
-	}
+	casReportingService := newCasReportingService(nil)
+	ssoSessionReport, resp, _ := casReportingService.listActiveSessions()
+	checkResponseAndExitIfNecessary(resp)
+
 	table := termtables.CreateTable()
 	table.AddTitle("CAS server " + casServerBaseUrl + " active SSO sessions")
 	table.AddHeaders("User", "Authentication Date", "Number of uses", "Services")

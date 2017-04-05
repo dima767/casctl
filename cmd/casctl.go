@@ -14,6 +14,9 @@
 package cmd
 
 import (
+	"net/http"
+
+	"github.com/dghubble/sling"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -29,6 +32,16 @@ var (
 var RootCmd = &cobra.Command{
 	Use:   "casctl",
 	Short: "Command line utility for administrative endpoints exposed by CAS server.",
+}
+
+type casReportingService struct {
+	sling *sling.Sling
+}
+
+func newCasReportingService(httpClient *http.Client) *casReportingService {
+	return &casReportingService{
+		sling: sling.New().Client(httpClient).Base(casServerBaseUrl),
+	}
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
