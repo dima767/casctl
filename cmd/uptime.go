@@ -15,6 +15,8 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -37,7 +39,7 @@ func init() {
 }
 
 type AvailabilityReport struct {
-	UpTime int64
+	UpTime int
 }
 
 func (s *casReportingService) getCasServerAvailability() (*AvailabilityReport, *http.Response, error) {
@@ -51,7 +53,8 @@ func displayCasServerUptime() {
 	availability, resp, _ := casReportingService.getCasServerAvailability()
 	checkResponseAndExitIfNecessary(resp)
 
-	uptimeString := fmt.Sprintf("CAS server %s uptime: %d hours %d minutes.", casServerBaseUrl, availability.UpTime/3600, availability.UpTime/60)
+	uptimeDuration, _ := time.ParseDuration(strconv.Itoa(availability.UpTime) + "s")
+	uptimeString := fmt.Sprintf("CAS server %s uptime: %v", casServerBaseUrl, uptimeDuration)
 	fmt.Println()
 	greenPrintln(uptimeString)
 }
